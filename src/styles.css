@@ -43,7 +43,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 15; width: 241px; display: flex; flex-direction: column; background: #171714; border-right: 1px solid #292a25; transition: width .18s ease, transform .18s ease; }
 .brand-row { height: 44px; padding: 0 6px 0 8px; display: flex; align-items: center; justify-content: space-between; flex: 0 0 44px; }
 .brand-link { display: inline-flex; align-items: center; width: 28px; height: 28px; }
-.apollo-mark { width: 28px; height: 28px; object-fit: contain; }
+.prospect-mark { width: 28px; height: 28px; object-fit: contain; }
+.brand-product { display: inline-flex; align-items: center; gap: 7px; color: #f2f2eb; font-size: 11px; font-weight: 680; white-space: nowrap; }
+.brand-beta { padding: 2px 5px; border: 1px solid rgba(242,247,100,.42); border-radius: 4px; color: var(--yellow); font-size: 8px; font-weight: 800; letter-spacing: .08em; }
 .collapse-sidebar { border: 0; padding: 4px; color: #97998f; background: transparent; cursor: pointer; display: grid; place-items: center; border-radius: 4px; }
 .collapse-sidebar:hover { background: var(--surface-hover); color: white; }
 .side-scroll { min-height: 0; overflow: auto; flex: 1; padding: 0 8px 10px; scrollbar-width: thin; scrollbar-color: #41423b transparent; }
