@@ -1,8 +1,8 @@
-import { ArrowUpRight, Building2, CalendarDays, Check, ClipboardList, Mail, Users } from "lucide-react";
+import { ArrowUpRight, Building2, CalendarDays, Check, ClipboardList, Mail, Phone, Users } from "lucide-react";
 import { isPlaceholderDomain, isPlaceholderEmail } from "./demoData.js";
 import { contactPhoneHref, normalizeLinkedInUrl } from "./contactUtils.js";
 
-const hiddenFields = new Set(["id", "name", "summary", "body", "note", "notes", "preview", "aiResearch", "aiResearchUpdatedAt", "initials", "color", "source", "past", "done", "enrichmentAttempted", "canEnrich", "unread", "apolloOrganizationId", "personId", "draft", "searchMatch", "enrichedAt", "localUpdatedAt", "recipientNeedsReview"]);
+const hiddenFields = new Set(["id", "name", "summary", "body", "note", "notes", "preview", "aiResearch", "aiResearchUpdatedAt", "initials", "color", "source", "past", "done", "enrichmentAttempted", "canEnrich", "unread", "apolloOrganizationId", "personId", "draft", "searchMatch", "enrichedAt", "localUpdatedAt", "recipientNeedsReview", "recipientReviewReason"]);
 const labels = { role: "Job title", title: "Title", email: "Email address", phone: "Phone", to: "To", recipient: "Contact", from: "From", time: "Updated", folder: "Folder", people: "Contacts", employees: "Employees", person: "Contact", company: "Company", amount: "Deal value", close: "Expected close", domain: "Website", linkedinUrl: "LinkedIn", associatedDeal: "Associated deal", annualRevenue: "Annual revenue", totalFunding: "Total funding", dueDate: "Due date", assignedTo: "Assigned to", taskStatus: "Task status", enrichedAt: "Enriched", aiResearchUpdatedAt: "AI research updated" };
 const sourceLabel = record => record.source === "sample" ? "Sample data"
   : record.source === "apollo" || record.apolloOrganizationId ? "Apollo"
@@ -11,6 +11,23 @@ const sourceLabel = record => record.source === "sample" ? "Sample data"
 const sourceTone = record => record.source === "sample" ? "gold"
   : record.source === "apollo" || record.apolloOrganizationId ? "green"
     : record.source === "csv-import" ? "blue" : "";
+const validEmailAddress = value => /^[^\s@]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(String(value || "").trim());
+function contactChannelDetails(record) {
+  const email = String(record.email || "").trim();
+  const phone = String(record.phone || "").trim();
+  const linkedin = String(record.linkedinUrl || "").trim();
+  const emailState = isPlaceholderEmail(email) ? "Sample address · not deliverable"
+    : !email ? "Not on file"
+      : !validEmailAddress(email) ? "Check address format"
+        : ["Verified", "Email available"].includes(record.status) ? `Status · ${record.status}` : "On file · status not verified";
+  const phoneState = !phone ? "Not on file" : contactPhoneHref(phone) ? "Number on file" : "Check number format";
+  const linkedinState = !linkedin ? "Not on file" : normalizeLinkedInUrl(linkedin) ? "Profile link on file" : "Check profile URL";
+  return [
+    { label: "Email", value: emailState, icon: Mail, tone: isPlaceholderEmail(email) || Boolean(email && (!validEmailAddress(email) || !["Verified", "Email available"].includes(record.status))) ? "attention" : email ? "present" : "missing" },
+    { label: "Phone", value: phoneState, icon: Phone, tone: !phone ? "missing" : contactPhoneHref(phone) ? "present" : "attention" },
+    { label: "LinkedIn", value: linkedinState, icon: Users, tone: !linkedin ? "missing" : normalizeLinkedInUrl(linkedin) ? "present" : "attention" },
+  ];
+}
 const money = value => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 function formatValue(key, value) {
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -33,7 +50,7 @@ function valueLink(key, value) {
 }
 
 export function WorkspaceRecordDetails({ record, data, contacts, onOpen }) {
-  const isContact = Boolean(record.name && record.company && (record.title || record.role || record.email));
+  const isContact = Boolean(record.name && record.company && (record.title || record.role || record.email || record.phone || record.linkedinUrl));
   const isCompany = Boolean(record.name && record.domain && !record.company);
   const recipientContact = contacts.find(person => person.name === record.recipient || (record.to && person.email?.toLowerCase() === String(record.to).toLowerCase()));
   const accountName = isCompany ? record.name : record.company || recipientContact?.company || contacts.find(person => person.name === record.person || person.name === record.from)?.company;
@@ -50,6 +67,7 @@ export function WorkspaceRecordDetails({ record, data, contacts, onOpen }) {
   const fields = Object.entries(record).filter(([key, value]) => !key.startsWith("_") && !hiddenFields.has(key) && value !== "" && value != null && typeof value !== "object" && !(key === "title" && !isContact) && !(isContact && key === "title" && record.role && String(record.title).trim().toLowerCase() === String(record.role).trim().toLowerCase()) && !(key === "subject" && record.subject) && !(key === "closeDate" && record.close));
   return <>
     <div className="wm-record-status">{statusText && <span className="wm-pill">{typeof record.done === "boolean" && record.done ? <><Check size={12}/> {statusText}</> : statusText}</span>}<span className={`wm-pill ${sourceTone(record)}`}>{sourceLabel(record)}</span></div>
+    {isContact && <section className="wm-contact-channel-coverage" aria-label="Contact channel information"><header><strong>Contact channels</strong><small>Saved fields, not a delivery or profile check</small></header><div>{contactChannelDetails(record).map(({ label, value, icon: Icon, tone }) => <article key={label}><span><Icon size={13}/>{label}</span><small className={tone}>{value}</small></article>)}</div><p>Email status is shown as saved; phone reachability and LinkedIn profile ownership are not verified.</p></section>}
     <div className="wm-record-fields">{fields.map(([key, value]) => { const text = String(value); const href = valueLink(key, text); const placeholder = key === "email" ? isPlaceholderEmail(text) : ["website", "domain"].includes(key) && isPlaceholderDomain(text); const external = href?.startsWith("http"); const linkText = key === "linkedinUrl" ? "Open profile" : formatValue(key, value); return <div className="wm-record-field" key={key}><small>{labels[key] || key.replace(/[A-Z]/g, " $&")}</small>{href ? <a href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined}>{linkText}{external && <ArrowUpRight size={12}/>}</a> : <><strong>{formatValue(key, value)}</strong>{placeholder && <small className="wm-placeholder-note">{key === "email" ? "Sample address · not deliverable" : "Sample domain · not live"}</small>}</>}</div>; })}</div>
     {[['Enriched', record.enrichedAt], ['AI research updated', record.aiResearchUpdatedAt], ['Edited locally', record.localUpdatedAt]].filter(([, value]) => value).length > 0 && <div className="wm-record-freshness">{[['Enriched', record.enrichedAt], ['AI research updated', record.aiResearchUpdatedAt], ['Edited locally', record.localUpdatedAt]].filter(([, value]) => value).map(([label, value]) => <span key={label}>{label} · {formatValue("updatedAt", value)}</span>)}</div>}
     {[["Message", record.body || record.preview], ["Summary", record.summary], ["Notes", record.note || record.notes], ["AI research", record.aiResearch]].filter(([, text]) => text).map(([label, text]) => <div className="wm-detail-summary" key={label}><small>{label}</small><p>{text}</p></div>)}

@@ -518,7 +518,7 @@ export function App() {
     if (resultProvider === "apollo") {
       return source.filter(person => {
         if (!needle) return true;
-        return `${person.name} ${person.role} ${person.company} ${person.location} ${person.email || ""} ${person.phone || ""} ${person.linkedinUrl || ""}`.toLowerCase().includes(needle);
+        return `${person.name} ${person.role} ${person.company} ${person.location} ${person.email || ""} ${person.phone || ""} ${String(person.phone || "").replace(/\D/g, "")} ${person.linkedinUrl || ""}`.toLowerCase().includes(needle);
       }).sort((a, b) => {
         if (sortField === "Relevance") return 0;
         const fields = { "First name": "name", "Last name": "name", Company: "company", Location: "location", "Created date": "createdAt" };
@@ -539,7 +539,7 @@ export function App() {
       const location = String(accountHq ? person.hqLocation || person.location : person.location).toLowerCase();
       const industry = String(person.industry || "").toLowerCase();
       const pastRole = String(person.pastRole || "").toLowerCase();
-      const allText = `${person.name} ${role} ${pastRole} ${company} ${location} ${person.country || ""} ${industry} ${person.status} ${person.email || ""} ${person.phone || ""} ${person.linkedinUrl || ""} ${companyKeywords} ${companyDescription}`.toLowerCase();
+      const allText = `${person.name} ${role} ${pastRole} ${company} ${location} ${person.country || ""} ${industry} ${person.status} ${person.email || ""} ${person.phone || ""} ${String(person.phone || "").replace(/\D/g, "")} ${person.linkedinUrl || ""} ${companyKeywords} ${companyDescription}`.toLowerCase();
 
       if (needle && !allText.includes(needle)) return false;
       if (resultProvider !== "apollo" && promptTerms.some(term => !promptTermMatches(allText, term))) return false;
@@ -690,7 +690,9 @@ export function App() {
       const imported = rows.slice(1).map((values, index) => {
         const name = at(values, nameIndex) || [at(values, firstIndex), at(values, lastIndex)].filter(Boolean).join(" ") || at(values, emailIndex).split("@")[0].replace(/[._-]+/g, " ");
         if (!name) return null;
-        return { id: `local:${crypto.randomUUID()}:${index}`, name, title: at(values, titleIndex) || "Title unavailable", role: at(values, titleIndex) || "Title unavailable", company: at(values, companyIndex) || "Company unavailable", email: at(values, emailIndex).toLowerCase(), phone: at(values, phoneIndex), linkedinUrl: normalizeLinkedInUrl(at(values, linkedinIndex)) || at(values, linkedinIndex), location: at(values, locationIndex) || "Location unavailable", status: at(values, emailIndex) ? "Added manually" : "Unavailable", source: "local", initials: name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(), color: "blue" };
+        const phoneValue = at(values, phoneIndex);
+        const phone = phoneValue.startsWith("'") && contactPhoneHref(phoneValue.slice(1)) ? phoneValue.slice(1) : phoneValue;
+        return { id: `local:${crypto.randomUUID()}:${index}`, name, title: at(values, titleIndex) || "Title unavailable", role: at(values, titleIndex) || "Title unavailable", company: at(values, companyIndex) || "Company unavailable", email: at(values, emailIndex).toLowerCase(), phone, linkedinUrl: normalizeLinkedInUrl(at(values, linkedinIndex)) || at(values, linkedinIndex), location: at(values, locationIndex) || "Location unavailable", status: at(values, emailIndex) ? "Added manually" : "Unavailable", source: "local", initials: name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(), color: "blue" };
       }).filter(Boolean);
       const seenNames = new Set(savedPeople.map(person => person.name.toLowerCase()));
       const seenEmails = new Set(savedPeople.map(person => person.email?.toLowerCase()).filter(Boolean));
@@ -723,7 +725,7 @@ export function App() {
     const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = `prospects-${new Date()}.toISOString().slice(0, 10)}.csv`;
+    link.download = `prospects-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     const source = selected.length ? "selected results" : showingSavedPeople ? "saved people" : showingResults ? "the current results page" : "saved people";
@@ -1126,7 +1128,7 @@ export function App() {
       <input id="apollo-contact-csv" type="file" accept=".csv,text/csv" hidden onChange={importContactsCsv} />
       <aside id="primary-navigation" className={`sidebar ${sidebarOpen ? "mobile-open" : ""}`} role={mobileNavOpen ? "dialog" : "navigation"} aria-label="Primary navigation" aria-modal={mobileNavOpen || undefined} aria-hidden={isMobileNav && !sidebarOpen} inert={isMobileNav && !sidebarOpen} onClick={event => { event.stopPropagation(); if (event.target.closest("a[href]")) setSidebarOpen(false); }}>
         <div className="brand-row">
-            <a href="#/home" className="brand-link" aria-label="Apollo home" onClick={() => { setActiveNav("Home"); setActiveModule("Home"); }}><ProspectFinderMark /></a>
+            <a href="#/home" className="brand-link" aria-label="Prospect Finder home" onClick={() => { setActiveNav("Home"); setActiveModule("Home"); }}><ProspectFinderMark /></a>
           <button className="collapse-sidebar" aria-label={isMobileNav ? "Close navigation" : sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => isMobileNav ? setSidebarOpen(false) : setSidebarCollapsed(value => !value)}>{isMobileNav ? <X size={16} /> : <PanelLeftClose size={16} />}</button>
         </div>
         <div className="side-scroll">

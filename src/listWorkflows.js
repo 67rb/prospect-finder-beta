@@ -1,4 +1,31 @@
+import { contactPhoneHref, normalizeLinkedInUrl } from "./contactUtils.js";
+import { isPlaceholderEmail } from "./demoData.js";
+
 const nameKey = value => String(value || "").trim().toLowerCase();
+
+export function sequenceChannels(sequence) {
+  const known = new Map([["email", "Email"], ["call", "Call"], ["linkedin", "LinkedIn"]]);
+  return [...new Set((sequence?.stepPlan || []).map(step => known.get(String(step.channel || "").trim().toLowerCase())).filter(Boolean))];
+}
+
+export function sequenceContactChannels(sequence, person) {
+  return sequenceChannels(sequence).map(channel => {
+    let onFile = false;
+    if (channel === "Email") {
+      const email = String(person?.email || "").trim();
+      onFile = /^[^\s@]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(email) && !isPlaceholderEmail(email);
+    } else if (channel === "Call") {
+      onFile = Boolean(contactPhoneHref(person?.phone));
+    } else if (channel === "LinkedIn") {
+      onFile = Boolean(normalizeLinkedInUrl(person?.linkedinUrl));
+    }
+    return { channel, onFile };
+  });
+}
+
+export function sequenceChannelGaps(sequence, person) {
+  return sequenceContactChannels(sequence, person).filter(item => !item.onFile).map(item => item.channel);
+}
 
 export function uniqueListMembers(list) {
   const members = Array.isArray(list?.members) ? list.members : [];
@@ -31,6 +58,9 @@ export function resolveEnrollmentScope(scope, state, contacts) {
   return { sequence, sourceList, people, excludedCount: requested.length - people.length, error: "" };
 }
 
-export function enrollmentPrompt(sequenceName, contacts, sourceListName) {
-  return `Enroll only these contacts in the sequence named “${sequenceName}”: ${contacts.map(person => person.name).join("; ")}.${sourceListName ? ` They are selected from the People list “${sourceListName}”.` : ""} Show the exact contacts and sequence for review before applying. Do not enroll anyone else or send outreach.`;
+export function enrollmentPrompt(sequence, contacts, sourceListName) {
+  const name = typeof sequence === "string" ? sequence : sequence?.name || "the selected sequence";
+  const gaps = contacts.map(person => ({ name: person.name, channels: sequenceChannelGaps(typeof sequence === "string" ? null : sequence, person) })).filter(item => item.channels.length);
+  const gapSummary = gaps.length ? ` Missing saved channel fields: ${gaps.map(item => `${item.name} (${item.channels.join(", ")})`).join("; ")}. Note these are field-presence checks only; do not describe other addresses, numbers, or profiles as verified.` : " Note that channel fields on file are not independently verified.";
+  return `Enroll only these contacts in the sequence named “${name}”: ${contacts.map(person => person.name).join("; ")}.${sourceListName ? ` They are selected from the People list “${sourceListName}”.` : ""}${gapSummary} Show the exact contacts, sequence, and any missing channel fields for review before applying. This updates a local sequence plan; do not enroll anyone else or send outreach.`;
 }

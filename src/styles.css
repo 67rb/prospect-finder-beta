@@ -428,6 +428,9 @@ tbody tr:last-child td { border-bottom: 0; }
 .email-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .email-cell a { max-width: 250px; overflow: hidden; color: #b8c9dc; text-overflow: ellipsis; white-space: nowrap; }
 .email-cell .email-placeholder { max-width: 250px; color: #a0a196; font-size: 11px; overflow-wrap: anywhere; }
+.contact-channel-link { color:#dfe7a7; text-decoration:none; }
+.contact-channel-link:hover { text-decoration:underline; }
+.saved-contacts-table tbody td:nth-child(6), .saved-contacts-table tbody td:nth-child(7) { white-space:nowrap; }
 .email-cell > small { color: #a0a196; }
 .enrich-action { height: 24px; padding: 0 7px; font-size: 10px; }
 .enrichment-credit-note { color: #c7b782 !important; line-height: 1.55; }
@@ -583,6 +586,14 @@ tbody tr:last-child td { border-bottom: 0; }
   .table-wrap tbody td:nth-child(5)::before { content: "Email"; }
   .table-wrap .email-cell a, .table-wrap .email-cell .email-placeholder { max-width: 100%; font-size: 10px; white-space: normal; overflow-wrap: anywhere; }
   .table-wrap .row-action { min-height: 32px; }
+  .saved-contacts-table tbody tr { grid-template-areas: "select name action" "select company action" "select location action" "select email action" "select phone action" "select linkedin action"; }
+  .saved-contacts-table tbody td:nth-child(6) { grid-area: phone; }
+  .saved-contacts-table tbody td:nth-child(7) { grid-area: linkedin; padding-bottom: 11px; }
+  .saved-contacts-table tbody td:nth-child(6), .saved-contacts-table tbody td:nth-child(7) { white-space:normal; }
+  .saved-contacts-table tbody td:nth-child(8) { grid-area: action; grid-row: 1 / span 6; }
+  .saved-contacts-table tbody td:nth-child(6)::before, .saved-contacts-table tbody td:nth-child(7)::before { display: block; margin-bottom: 4px; color: #92948b; font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
+  .saved-contacts-table tbody td:nth-child(6)::before { content: "Phone"; }
+  .saved-contacts-table tbody td:nth-child(7)::before { content: "LinkedIn"; }
 }
 
 /* Apollo workspace modules */
@@ -899,6 +910,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .wm-email-draft-editor input { min-height:30px; }
 .wm-email-draft-editor textarea { resize:vertical; }
 .wm-email-draft-editor input:disabled,.wm-email-draft-editor textarea:disabled { color:#aeb0a3; opacity:.85; }
+.wm-email-recipient-review { display:block; padding:6px 8px; border:1px solid #514432; border-radius:5px; color:#e2c58f; background:#28241d; font-size:9px; line-height:1.5; }
 .wm-email-draft-issues { margin:0; padding:8px 8px 8px 24px; border:1px solid #65433c; border-radius:6px; color:#edb6a7; background:#2a1e1b; font-size:9px; line-height:1.5; }
 .wm-action-review > .wm-sequence-optimization-editor { max-height:290px; display:grid; align-items:stretch; gap:8px; overflow-y:auto; }
 .wm-sequence-optimization-signal { padding:7px 9px; border:1px solid #414236; border-radius:6px; display:flex; align-items:center; justify-content:space-between; gap:8px; color:#bfc0b7; background:#20211a; font-size:9px; }
